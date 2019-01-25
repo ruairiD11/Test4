@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset = "UTF-8">
+      <title>Game</title>
+        <style>
+
+          #container {
+            height: 400px;
+            width: 600px;
+            outline: 1px solid black;
+            position: relative;
+          }
+
+          #guy {
+            position: absolute;
+            height: 300px;
+            width: 300px;
+            //outline: 1px solid black;
+            background: url('https://tse1.mm.bing.net/th?id=OIP.y_qxSbp4k1ytwKBNwDctbwHaHg&pid=15.1&P=0&w=300&h=300') 0px 0px;
+            left: 0;
+          }
+
+        </style>
+  </head>
+
+<body>
+
+  <div id="container">
+    <div id="guy"></div>
+
+  </div>
+
+<script>
+    var guy=document.getElementById('guy');
+    var container=document.getElementById('container');
+
+    var guyLeft = 0;
+    var guyTop = 0;
+
+    function anim(e){
+        if(e.keyCode==39){  //Right keypress
+            guyLeft += 5;  // Adding 5 pixels
+            guy.style.left = guyLeft + 'px';
+            //Collision detection
+            if(guyLeft >= 300){
+              guyLeft -= 5;
+            }
+        }
+        if(e.keyCode==37){  //Left keypress
+            guyLeft -= 5;  // Subtracting 5 pixels
+            guy.style.left = guyLeft + 'px';
+            //Collision detection
+            if(guyLeft <= 0) {
+                guyLeft += 5;
+            }
+        }
+        if(e.keyCode==38){  //Up keypress
+            guyTop -= 5;  // Subtracting 5 pixels
+            guy.style.top = guyTop + 'px';
+            //Collision detection
+            if(guyTop <= 0) {
+                guyTop += 5;
+            }
+        }
+        if(e.keyCode==40){  //Down keypress
+            guyTop += 5;  // Adding 5 pixels
+            guy.style.top = guyTop + 'px';
+            //Collision detection
+            if(guyTop >= 100) {
+                guyTop -= 5;
+            }
+        }
+
+    }
+
+    document.onkeydown = anim;
+
+
+</script>
+</body>
+</html>

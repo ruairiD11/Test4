@@ -1,51 +1,56 @@
 <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas> 
-<img src="playerPNG.png" id='Player' style='position:absolute; top:425;left:225; z-index:2'>
+<img src="playerPNG.png" id='Player' style='position:absolute; top:425;left:225; z-index:3'>
 
 <script>
 var ctx = document.getElementById("ctx").getContext("2d");
-ctx.font = '30px Arial';
+ctx.font = '30px Droid Sans';
 
 var WIDTH = 500;
 var HEIGHT = 500;
 
-setInterval(update,30);
-document.addEventListener('keydown', updatePlayer);
+var interval = setInterval(update,30);
 
 var player = document.getElementById('Player').style;
 var xPlayer = 225;
 var yPlayer = 425;
 
-var enemy = function(x,y,spdX,spdY,name) {
+
+var enemy = function(x,y,spdX,spdY,radius) {
 	this.x = x;
 	this.y = y;
 	this.spdX = spdX;
 	this.spdY = spdY;
-	this.name = name;
+	this.radius = radius;
 	
 	this.update = function(){
-		ctx.fillText(this.name,this.x, this.y);
+		ctx.beginPath();
+		ctx.fillStyle = 'red';
+		ctx.arc(this.x, this.y,this.radius,0,2*3.14); //creates circle
+		ctx.fill();
+		ctx.stroke();
+		
 		
 		this.x+= this.spdX;
 		this.y+= this.spdY;
 		
-		if(this.x < 0 || this.x > WIDTH){
+		if(this.x <= 5 || this.x >= WIDTH-5){
 			this.spdX = -this.spdX;
 		}
 	
-		if(this.y < 0 || this.y > HEIGHT){
+		if(this.y <= 5 || this.y >= HEIGHT-5){
 			this.spdY = -this.spdY;
 		}
+		
 	};
 };
 
 function updatePlayer(e){
-	//ctx.fillText(player.name, player.left, player.top);
 	var key = e.keyCode;
 	
 	if(key==39){  //Right keypress
 			xPlayer += 5;  // Adding 5 pixels
             //Collision detection
-            if(xPlayer >= WIDTH-35){
+            if(xPlayer >= WIDTH-40){
               xPlayer -= 5;
             }
 			player.left = xPlayer;
@@ -69,29 +74,52 @@ function updatePlayer(e){
         if(key==40){  //Down keypress
             yPlayer += 5;  // Adding 5 pixels
             //Collision detection
-            if(yPlayer >= HEIGHT-50) {
+            if(yPlayer >= HEIGHT-40) {
                 yPlayer -= 5;
             }
 			player.top = yPlayer;
         }
-
 }
 
-
-enemy1 = new enemy(50,40,15,5,'X');
-enemy2 = new enemy(400,40,-15,2,'X');
-
+enemy1 = new enemy(50,40,15,5,10);  // x, y, speedX, speedY, radius
+enemy2 = new enemy(400,40,-15,2,10);
 
 function update(){
 	ctx.clearRect(0,0,WIDTH,HEIGHT);
 	enemy1.update();
 	enemy2.update();
-	updatePlayer();
+	document.addEventListener('keydown', updatePlayer);
+	ctx.fillStyle = 'green';
+	ctx.fillRect(0,0,500,50);
+	//console.log("PlayerX: " + xPlayer);
+	//console.log("PlayerY: " + yPlayer);
+	//console.log("Enemy1: " + enemy1.x + ", "+ enemy1.y);
+	
+	// Collision detection between player and enemies
+	if (enemy1.x + enemy1.radius > xPlayer &&
+		enemy1.x + enemy1.radius < xPlayer+51 &&
+		enemy1.y + enemy1.radius > yPlayer &&
+		enemy1.y + enemy1.radius < yPlayer+51){
+				gameOver();
+		}
+		
+	if (enemy2.x + enemy2.radius > xPlayer &&
+		enemy2.x + enemy2.radius < xPlayer+51 &&
+		enemy2.y + enemy2.radius > yPlayer &&
+		enemy2.y + enemy2.radius < yPlayer+51){
+				gameOver();
+		}
+	
+	
 }
 
-
-
-
-
-
+function gameOver(){
+	//setInterval(gameOver, 1000);
+	//ctx.clearRect(0,0,WIDTH,HEIGHT);
+	ctx.fillStyle = 'red';
+	ctx.fillText("GAME OVER", 160,250);
+	ctx.fillText("Refresh to restart",150,280);
+	//document.location.reload();
+	clearInterval(interval);
+}
 </script>

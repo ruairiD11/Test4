@@ -1,10 +1,35 @@
 <!DOCTYPE html>
 
 <html>
+<title>NodeJS Game</title>
+<style>
+button {
+		postion: absolute;
+	  background-color: red;
+		border: 1px solid black;
+		color: white;
+	  font-size: 30px;
+	}
+</style>
 
 <body>
-
 <canvas id="ctx" width="500" height="600" style="border:1px solid #000000;"></canvas>
+<div style="position: absolute; left:580px; top: 250px;">
+	<button class="button" onmousedown="moveUp()" onmouseup="stopPlayer()"
+	ontouchstart="moveUp()">UP</button></div>
+
+<div style="position: absolute; left:555px; top: 350px;">
+	<button onmousedown="moveDown()" onmouseup="stopPlayer()"
+	ontouchstart="moveDown()">DOWN</button></div>
+
+<div style="position: absolute; left:520px; top: 300px;">
+	<button onmousedown="moveLeft()" onmouseup="stopPlayer()"
+	ontouchstart="moveLeft()">LEFT</button></div>
+
+<div style="position: absolute; left:610px; top: 300px;">
+	<button onmousedown="moveRight()" onmouseup="stopPlayer()"
+	ontouchstart="moveRight()">RIGHT</button></div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
 
 <script>
@@ -13,9 +38,45 @@ ctx.font = '30px Droid Sans';
 var WIDTH = 500;
 var HEIGHT = 600;
 var interval = setInterval(update,30);
-var xPlayer = 225;
-var yPlayer = 525;
+var socket = io();
 
+//Player object
+var Player = function(x,y,spdX,spdY,width,height) {
+	this.x = x;
+	this.y = y;
+	this.spdX = spdX;
+	this.spdY = spdY;
+	this.width = width;
+	this.height = height;
+
+	this.update = function(){
+		this.x += this.spdX;
+		this.y += this.spdY;
+
+		//Collision detection between player and canvas
+		//top of canvas
+		if(this.y <= 0) {
+				this.y += this.spdY;
+		}
+		//bottom of canvas
+		if(this.y >= HEIGHT-this.height) {
+				 this.y -= this.spdY;
+		}
+		//left of canvas
+		if(this.x <= 0) {
+				this.x -= this.spdX;
+		}
+		//right of canvas
+		if(this.x >= WIDTH-this.width){
+				this.x -= this.spdX;
+		}
+		//Draw player
+		ctx.fillStyle = 'green';
+		ctx.fillRect(this.x,this.y,this.width,this.height);
+	}
+}
+
+//Enemy object
 var Enemy = function(x,y,spdX,spdY,radius) {
 	this.x = x;
 	this.y = y;
@@ -28,8 +89,6 @@ var Enemy = function(x,y,spdX,spdY,radius) {
 		ctx.fillStyle = 'red';
 		ctx.arc(this.x, this.y,this.radius,0,2*3.14); //creates circle
 		ctx.fill();
-		ctx.stroke();
-
 
 		this.x+= this.spdX;
 		this.y+= this.spdY;
@@ -45,41 +104,7 @@ var Enemy = function(x,y,spdX,spdY,radius) {
 	};
 };
 
-function updatePlayer(e){
-	ctx.fillStyle = 'blue';
-	ctx.fillRect(xPlayer,yPlayer,50,50);
-	var key = e.keyCode;
-
-	if(key==39){  //Right keypress
-			xPlayer += 5;  // Adding 5 pixels
-      //Collision detection
-      if(xPlayer >= WIDTH-40){
-          xPlayer -= 5;
-      }
-  }
-  if(key==37){  //Left keypress
-      xPlayer -= 5;  // Subtracting 5 pixels
-      //Collision detection
-      if(xPlayer <= 5) {
-          xPlayer += 5;
-      }
-  }
-  if(key==38){  //Up keypress
-      yPlayer -= 5;  // Subtracting 5 pixels
-      //Collision detection
-      if(yPlayer <= 0) {
-          yPlayer += 5;
-      }
-  }
-  if(key==40){  //Down keypress
-      yPlayer += 5;  // Adding 5 pixels
-      //Collision detection
-      if(yPlayer >= HEIGHT-40) {
-           yPlayer -= 5;
-      }
-  }
-}
-
+player1 = new Player(225,525,0,0,50,50); //x, y, spdX, spdY, width, height
 enemy1 = new Enemy(50,80,15,5,10);  // x, y, speedX, speedY, radius
 enemy2 = new Enemy(400,80,-15,2,10);
 
@@ -87,33 +112,28 @@ function update(){
 	ctx.clearRect(0,0,WIDTH,HEIGHT);
 	enemy1.update();
 	enemy2.update();
-
+	player1.update();
 	ctx.fillStyle = 'green';
 	ctx.fillRect(0,0,500,50);
-	//console.log("PlayerX: " + xPlayer);
-	//console.log("PlayerY: " + yPlayer);
-	//console.log("Enemy1: " + enemy1.x + ", "+ enemy1.y);
 
 	// Collision detection between player and enemies
-	if (enemy1.x + enemy1.radius > xPlayer &&
-			enemy1.x + enemy1.radius < xPlayer+51 &&
-			enemy1.y + enemy1.radius > yPlayer &&
-			enemy1.y + enemy1.radius < yPlayer+51){
+	if (enemy1.x + enemy1.radius > player1.x + 5&&
+			enemy1.x + enemy1.radius < player1.x + player1.width &&
+			enemy1.y + enemy1.radius > player1.y + 5 &&
+			enemy1.y + enemy1.radius < player1.y + player1.height){
 					gameOver();
 	}
 
-	if (enemy2.x + enemy2.radius > xPlayer &&
-			enemy2.x + enemy2.radius < xPlayer+51 &&
-			enemy2.y + enemy2.radius > yPlayer &&
-			enemy2.y + enemy2.radius < yPlayer+51){
+	if (enemy2.x + enemy2.radius > player1.x + 5 &&
+			enemy2.x + enemy2.radius < player1.x + player1.width &&
+			enemy2.y + enemy2.radius > player1.y + 5 &&
+			enemy2.y + enemy2.radius < player1.y + player1.height){
 					gameOver();
 	}
 
-	if (yPlayer < 10){
+	if (player1.y < 3){
 		gameComplete();
 	}
-	document.addEventListener('keydown', updatePlayer);
-	updatePlayer();
 
 }
 function gameOver(){
@@ -129,6 +149,68 @@ function gameComplete(){
 	ctx.fillText("Refresh to restart",150,330);
 	clearInterval(interval);
 }
+
+function moveUp(){
+	player1.spdY -= 3;
+}
+
+function moveDown(){
+	player1.spdY += 3;
+}
+
+function moveLeft(){
+	player1.spdX -= 3;
+}
+
+function moveRight(){
+	player1.spdX += 3;
+}
+
+function stopPlayer(){
+	player1.spdX = 0;
+	player1.spdY = 0;
+}
+
+/*window.addEventListener("load", function(){ //when page loads
+  var upButton = document.getElementById("UP");
+  upButton.addEventListener("change", function() { //add event listener for when checkbox changes
+    socket.emit("UP", Number(this.checked)); //send button status to server (as 1 or 0)
+  });
+});*/
+
+// HOW I AM COMMUNICATING WITH HARDWARE
+/*socket.on('UP', function (data) { //get button status from client
+  //document.getElementById("UP").checked = data; //change checkbox according to push button on Raspberry Pi
+  socket.emit("UP", data); //send push button status to back to server
+	if (data == 0){ // If up button press
+		yPlayer -= 5;  // subtract 5 pixels
+	}
+	if (yPlayer <= 0){
+		yPlayer += 5;
+	}
+});
+
+socket.on('LEFT', function (data) { //get button status from client
+  //document.getElementById("UP").checked = data; //change checkbox according to push button on Raspberry Pi
+  socket.emit("LEFT", data); //send push button status to back to server
+	if (data == 0){ // If left button press
+		xPlayer -= 5;  // subtract 5 pixels
+	}
+	if (xPlayer <= 5){
+		xPlayer += 5;
+	}
+});
+
+socket.on('RIGHT', function (data) { //get button status from client
+  //document.getElementById("UP").checked = data; //change checkbox according to push button on Raspberry Pi
+  socket.emit("RIGHT", data); //send push button status to back to server
+	if (data == 0){ // If right button press
+		xPlayer += 5;  // subtract 5 pixels
+	}
+	if (xPlayer >= WIDTH-40){
+		xPlayer -= 5;
+	}
+});*/
 </script>
 
 </body>

@@ -7,38 +7,41 @@ button {
 		postion: absolute;
 	  background-color: red;
 		border: 1px solid black;
+		width: 300px;
+		height: 200px;
 		color: white;
 	  font-size: 30px;
 	}
 </style>
 
 <body>
-<canvas id="ctx" width="500" height="600" style="border:1px solid #000000;"></canvas>
-<div style="position: absolute; left:580px; top: 250px;">
+<canvas id="ctx" width="960" height="900" style="border:1px solid #000000;"></canvas>
+<div style="position: absolute; left:350px; top: 1000px;">
 	<button class="button" onmousedown="moveUp()" onmouseup="stopPlayer()"
-	ontouchstart="moveUp()">UP</button></div>
+	ontouchstart="moveUp()" ontouchend="stopPlayer"></button></div>
 
-<div style="position: absolute; left:555px; top: 350px;">
+<div style="position: absolute; left:350px; top: 1300px;">
 	<button onmousedown="moveDown()" onmouseup="stopPlayer()"
-	ontouchstart="moveDown()">DOWN</button></div>
+	ontouchstart="moveDown()" ontouchend="stopPlayer"></button></div>
 
-<div style="position: absolute; left:520px; top: 300px;">
+<div style="position: absolute; left:20px; top: 1150px;">
 	<button onmousedown="moveLeft()" onmouseup="stopPlayer()"
-	ontouchstart="moveLeft()">LEFT</button></div>
+	ontouchstart="moveLeft()" ontouchend="stopPlayer"></button></div>
 
-<div style="position: absolute; left:610px; top: 300px;">
+<div style="position: absolute; left:670px; top: 1150px;">
 	<button onmousedown="moveRight()" onmouseup="stopPlayer()"
-	ontouchstart="moveRight()">RIGHT</button></div>
+	ontouchstart="moveRight()" ontouchend="stopPlayer"></button></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
 
 <script>
 var ctx = document.getElementById("ctx").getContext("2d");
-ctx.font = '30px Droid Sans';
-var WIDTH = 500;
-var HEIGHT = 600;
+ctx.font = '50px Droid Sans';
+var WIDTH = 960;
+var HEIGHT = 900;
 var interval = setInterval(update,30);
 var socket = io();
+var score = 0;
 
 //Player object
 var Player = function(x,y,spdX,spdY,width,height) {
@@ -97,27 +100,55 @@ var Enemy = function(x,y,spdX,spdY,radius) {
 			this.spdX = -this.spdX;
 		}
 
-		if(this.y <= 50 || this.y >= HEIGHT-5){
+		if(this.y <= 100 || this.y >= HEIGHT-5){
 			this.spdY = -this.spdY;
 		}
 
 	};
 };
 
-player1 = new Player(225,525,0,0,50,50); //x, y, spdX, spdY, width, height
-enemy1 = new Enemy(50,80,15,5,10);  // x, y, speedX, speedY, radius
-enemy2 = new Enemy(400,80,-15,2,10);
+//Gold object
+var Gold = function(x, y) {
+	this.x = x;
+	this.y = y;
+	this.width = 20;
+	this.height = 20;
+
+	this.update = function(){
+		ctx.fillStyle = 'yellow';
+		ctx.fillRect(this.x,this.y,this.width,this.height);
+	}
+
+	this.clear = function(){
+		// cheating!
+		// not really clearing, just placing it outside canvas
+		ctx.fillStyle = 'green';
+		ctx.fillRect(this.x,this.y,this.width,this.height);
+		this.x = 940;
+		this.y = 900;
+	}
+}
+
+player1 = new Player(470,800,0,0,70,70); //x, y, spdX, spdY, width, height
+enemy1 = new Enemy(50,120,15,5,20);  // x, y, speedX, speedY, radius
+enemy2 = new Enemy(400,120,-15,2,20);
+gold1 = new Gold(100,200);
+gold2 = new Gold(670,500);
 
 function update(){
 	ctx.clearRect(0,0,WIDTH,HEIGHT);
+	ctx.fillStyle = 'black';
+	ctx.fillText("Score: " + score, 760,880)
+	gold1.update();
+	gold2.update();
 	enemy1.update();
 	enemy2.update();
 	player1.update();
 	ctx.fillStyle = 'green';
-	ctx.fillRect(0,0,500,50);
+	ctx.fillRect(0,0,960,100);
 
 	// Collision detection between player and enemies
-	if (enemy1.x + enemy1.radius > player1.x + 5&&
+	if (enemy1.x + enemy1.radius > player1.x + 5 &&
 			enemy1.x + enemy1.radius < player1.x + player1.width &&
 			enemy1.y + enemy1.radius > player1.y + 5 &&
 			enemy1.y + enemy1.radius < player1.y + player1.height){
@@ -130,40 +161,54 @@ function update(){
 			enemy2.y + enemy2.radius < player1.y + player1.height){
 					gameOver();
 	}
-
-	if (player1.y < 3){
+	// Checking if player has made it to finsih point
+	if (player1.y < 30){
 		gameComplete();
+	}
+
+	// Collision detection between player and gold
+	if (gold1.x > player1.x && gold1.y > player1.y &&
+	gold1.x + gold1.width < player1.x + player1.width &&
+	gold1.y + gold1.height < player1.y + player1.height){
+		gold1.clear();
+		score += 1;
+	}
+	if (gold2.x > player1.x && gold2.y > player1.y &&
+	gold2.x + gold2.width < player1.x + player1.width &&
+	gold2.y + gold2.height < player1.y + player1.height){
+		gold2.clear();
+		score += 1;
 	}
 
 }
 function gameOver(){
 	ctx.fillStyle = 'red';
-	ctx.fillText("GAME OVER", 160,300);
-	ctx.fillText("Refresh to restart",150,330);
+	ctx.fillText("GAME OVER", 370,450);
+	ctx.fillText("Refresh to restart",320,500);
 	clearInterval(interval);
 }
 
 function gameComplete(){
 	ctx.fillStyle = 'blue';
-	ctx.fillText("LEVEL COMPLETE", 120,300);
-	ctx.fillText("Refresh to restart",150,330);
+	ctx.fillText("LEVEL COMPLETE", 310,450);
+	ctx.fillText("Refresh to restart",320,500);
 	clearInterval(interval);
 }
 
 function moveUp(){
-	player1.spdY -= 3;
+	player1.spdY -= 5;
 }
 
 function moveDown(){
-	player1.spdY += 3;
+	player1.spdY += 5;
 }
 
 function moveLeft(){
-	player1.spdX -= 3;
+	player1.spdX -= 5;
 }
 
 function moveRight(){
-	player1.spdX += 3;
+	player1.spdX += 5;
 }
 
 function stopPlayer(){

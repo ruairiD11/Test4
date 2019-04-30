@@ -1,8 +1,5 @@
 var http = require('http').createServer(handler); //require http server, and create server with function handler()
 var fs = require('fs'); //require filesystem module
-var io = require('socket.io')(http) //require socket.io module and pass the http object (server)
-var Gpio = require('onoff').Gpio; //include onoff to interact with the GPIO
-var upButton = new Gpio(17, 'in', 'both'); //use GPIO pin 17 as input
 
 http.listen(8080); //listen to port 8080
 
@@ -18,27 +15,6 @@ function handler (req, res) { //create server
   });
 }
 
-io.sockets.on('connection', function (socket) {// WebSocket Connection
-  var upValue = 1;
-  upButton.watch(function (err, value) { //Watch for hardware interrupts on pushButton
-    if (err) { //if an error
-      console.error('There was an error', err); //output error message to console
-      return;
-		}
-    upValue = value;
-    socket.emit('UP', upValue); //send button status to client
-	  if(upValue == 0){
-			console.log("Up button press");
-	   }
- });
-});
-
-
-
 process.on('SIGINT', function () { //on ctrl+c
-
-upButton.unexport(); // Unexport Button GPIO to free resources
-
-process.exit(); //exit completely
-
+  process.exit(); //exit completely
 });

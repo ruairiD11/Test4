@@ -1,23 +1,19 @@
 <!DOCTYPE html>
-
 <html>
 <title>NodeJS Game</title>
 <style>
 button {
-		postion: absolute;
-	  background-color: red;
-		border: 1px solid black;
+	  background-color: "#a6a6a6";
+		border: 10px solid black;
 		width: 300px;
 		height: 200px;
-		color: white;
-	  font-size: 30px;
 	}
 </style>
-
 <body>
+
 <canvas id="ctx" width="960" height="900" style="border:1px solid #000000;"></canvas>
 <div style="position: absolute; left:350px; top: 1000px;">
-	<button class="button" onmousedown="moveUp()" onmouseup="stopPlayer()"
+	<button onmousedown="moveUp()" onmouseup="stopPlayer()"
 	ontouchstart="moveUp()" ontouchend="stopPlayer"></button></div>
 
 <div style="position: absolute; left:350px; top: 1300px;">
@@ -32,15 +28,13 @@ button {
 	<button onmousedown="moveRight()" onmouseup="stopPlayer()"
 	ontouchstart="moveRight()" ontouchend="stopPlayer"></button></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
-
 <script>
+
 var ctx = document.getElementById("ctx").getContext("2d");
 ctx.font = '50px Droid Sans';
 var WIDTH = 960;
 var HEIGHT = 900;
 var interval = setInterval(update,30);
-var socket = io();
 var score = 0;
 
 //Player object
@@ -74,7 +68,7 @@ var Player = function(x,y,spdX,spdY,width,height) {
 				this.x -= this.spdX;
 		}
 		//Draw player
-		ctx.fillStyle = 'green';
+		ctx.fillStyle = '#3366ff'; //blue
 		ctx.fillRect(this.x,this.y,this.width,this.height);
 	}
 }
@@ -89,7 +83,7 @@ var Enemy = function(x,y,spdX,spdY,radius) {
 
 	this.update = function(){
 		ctx.beginPath();
-		ctx.fillStyle = 'red';
+		ctx.fillStyle = '#cc0000'; //dark red
 		ctx.arc(this.x, this.y,this.radius,0,2*3.14); //creates circle
 		ctx.fill();
 
@@ -115,14 +109,14 @@ var Gold = function(x, y) {
 	this.height = 20;
 
 	this.update = function(){
-		ctx.fillStyle = 'yellow';
+		ctx.fillStyle = '#ffcc00'; //gold colour
 		ctx.fillRect(this.x,this.y,this.width,this.height);
 	}
 
 	this.clear = function(){
 		// cheating!
 		// not really clearing, just placing it outside canvas
-		ctx.fillStyle = 'green';
+		ctx.fillStyle = '3366ff'; //blue
 		ctx.fillRect(this.x,this.y,this.width,this.height);
 		this.x = 940;
 		this.y = 900;
@@ -133,7 +127,8 @@ player1 = new Player(470,800,0,0,70,70); //x, y, spdX, spdY, width, height
 enemy1 = new Enemy(50,120,15,5,20);  // x, y, speedX, speedY, radius
 enemy2 = new Enemy(400,120,-15,2,20);
 gold1 = new Gold(100,200);
-gold2 = new Gold(670,500);
+gold2 = new Gold(690,300);
+gold3 = new Gold(250,670);
 
 function update(){
 	ctx.clearRect(0,0,WIDTH,HEIGHT);
@@ -141,10 +136,11 @@ function update(){
 	ctx.fillText("Score: " + score, 760,880)
 	gold1.update();
 	gold2.update();
+	gold3.update();
 	enemy1.update();
 	enemy2.update();
 	player1.update();
-	ctx.fillStyle = 'green';
+	ctx.fillStyle = '#3366ff'; //blue
 	ctx.fillRect(0,0,960,100);
 
 	// Collision detection between player and enemies
@@ -161,22 +157,28 @@ function update(){
 			enemy2.y + enemy2.radius < player1.y + player1.height){
 					gameOver();
 	}
-	// Checking if player has made it to finsih point
+	// Checking if player has made it to finish point
 	if (player1.y < 30){
 		gameComplete();
 	}
 
 	// Collision detection between player and gold
-	if (gold1.x > player1.x && gold1.y > player1.y &&
-	gold1.x + gold1.width < player1.x + player1.width &&
-	gold1.y + gold1.height < player1.y + player1.height){
+	if (gold1.x >= player1.x && gold1.y >= player1.y &&
+	gold1.x + gold1.width <= player1.x + player1.width &&
+	gold1.y + gold1.height <= player1.y + player1.height){
 		gold1.clear();
 		score += 1;
 	}
-	if (gold2.x > player1.x && gold2.y > player1.y &&
-	gold2.x + gold2.width < player1.x + player1.width &&
-	gold2.y + gold2.height < player1.y + player1.height){
+	if (gold2.x >= player1.x && gold2.y >= player1.y &&
+	gold2.x + gold2.width <= player1.x + player1.width &&
+	gold2.y + gold2.height <= player1.y + player1.height){
 		gold2.clear();
+		score += 1;
+	}
+	if (gold3.x >= player1.x && gold3.y >= player1.y &&
+	gold3.x + gold3.width <= player1.x + player1.width &&
+	gold3.y + gold3.height <= player1.y + player1.height){
+		gold3.clear();
 		score += 1;
 	}
 
@@ -215,47 +217,6 @@ function stopPlayer(){
 	player1.spdX = 0;
 	player1.spdY = 0;
 }
-
-/*window.addEventListener("load", function(){ //when page loads
-  var upButton = document.getElementById("UP");
-  upButton.addEventListener("change", function() { //add event listener for when checkbox changes
-    socket.emit("UP", Number(this.checked)); //send button status to server (as 1 or 0)
-  });
-});*/
-
-// HOW I AM COMMUNICATING WITH HARDWARE
-/*socket.on('UP', function (data) { //get button status from client
-  //document.getElementById("UP").checked = data; //change checkbox according to push button on Raspberry Pi
-  socket.emit("UP", data); //send push button status to back to server
-	if (data == 0){ // If up button press
-		yPlayer -= 5;  // subtract 5 pixels
-	}
-	if (yPlayer <= 0){
-		yPlayer += 5;
-	}
-});
-
-socket.on('LEFT', function (data) { //get button status from client
-  //document.getElementById("UP").checked = data; //change checkbox according to push button on Raspberry Pi
-  socket.emit("LEFT", data); //send push button status to back to server
-	if (data == 0){ // If left button press
-		xPlayer -= 5;  // subtract 5 pixels
-	}
-	if (xPlayer <= 5){
-		xPlayer += 5;
-	}
-});
-
-socket.on('RIGHT', function (data) { //get button status from client
-  //document.getElementById("UP").checked = data; //change checkbox according to push button on Raspberry Pi
-  socket.emit("RIGHT", data); //send push button status to back to server
-	if (data == 0){ // If right button press
-		xPlayer += 5;  // subtract 5 pixels
-	}
-	if (xPlayer >= WIDTH-40){
-		xPlayer -= 5;
-	}
-});*/
 </script>
 
 </body>
